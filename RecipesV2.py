@@ -4,16 +4,19 @@
 # In[ ]:
 
 
-#Recipes V2.0
+#Recipes V2.1
 
 
-# In[1]:
+# In[8]:
 
 
-#the most up-to-date, working version of all functions used are kep here
+#import all relevant packages
+import csv
+
+#the most up-to-date, working version of all functions used are kept here
 
 def Header(): #a function which will print a fun header at the start of the program
-    print '---RECIPE FINDER V2.0---','\n','--09 20 2018--','\n','-Because not knowing what to make is a bad excuse!-','\n','\n','\n'
+    print '---RECIPE FINDER V2.0---','\n','--09 19 2018--','\n','-Because not knowing what to make is a bad excuse!-','\n','\n','\n'
 
 #a function which will enable faster creation of recipe dicts and storage of those dicts in a list
 def AddRecipe(name, sweet, savory, spicy, effort, ingredients, prepTime):
@@ -33,6 +36,25 @@ def Avger(*args):
     for i in args:
         argLengthList.append(i)
     return sum(args)/len(argLengthList)
+
+#a function which returns the recipe with the highest/lowest value for a specified attribute
+def FindMe(minMax, attribute):
+    nameList = []
+    attributeList = []
+    for i in recipes:
+        nameList.append(i['name'])
+        attributeList.append(i[attribute])
+    attributeZip = zip(nameList,attributeList)
+    for i in attributeZip:
+        if minMax == 'minimum':
+            if i[1] == min(attributeList):
+                print i 
+        elif minMax == 'maximum':
+            if i[1] == max(attributeList):
+                print i
+        else:
+            print 'minMax value not allowed.  Please specify either minimum or maximum.'
+            break
             
 #a function which guides the user through the task of adding a recipe        
 def StartRecipeAdd(time):
@@ -146,13 +168,11 @@ def AskFlavorfulness(): #a function which interact with the user to determine wh
         tupleList.append(infoTuple)
     
     sortedTupleList = sorted(tupleList, key = lambda item:-item[1]) #sort the recipes descending by their flavorfulness value
-       
-    #recommendedRecipe = max(tupleList,key=lambda item:item[1])[0] #this line isn't used now, but may be later when I need to pull the max value instead of just sorting descending then pulling the first value
-        
+              
     print 'Ok, you should cook...',sortedTupleList[0][0], 'or', sortedTupleList[1][0] #return the first elements (name) of the elements (tuples) of sortedTupleList with the highest and second highest flavorfulness    
 
     
-def RecipeQuestions(recipeList): #this function allows the user to, by answering a series of questions, add a recipe to the list of pre-done recipes
+def RecipeQuestions(recipeList): #a function which allows the user to, by answering a series of questions, add a recipe to the list of pre-done recipes
     
     leaveOption = 'All done.'
     stayOption = 'Add another!'
@@ -160,11 +180,17 @@ def RecipeQuestions(recipeList): #this function allows the user to, by answering
     affirmativeExportOption = 'Yes.'
     negativeExportOption = 'No.'
     
-    #recipeList = [] #uncomment when debugging
+    #recipeList = [] #uncomment when debugging.  otherwise recipeList value should be set to recipes, the name of the list where the default recipes are stored
     newRecipeCounter = 0 #create a variable which counts the number of new recipes added by the user after calling this function
     
-    print 'Ok, time to add some recipes!','\n'
-    
+    print 'Ok, time to add some recipes!','\n','Want to use the default recipe list, or import your own?','\n','-Default.','\n','-Import.'
+    response = input()
+    if response == 'Import.':
+        ReadorWrite('r',recipes,r'C:\Users\ckene\Desktop\test.csv') #import the list of recipes which the user would rather use than the default recipe list
+        recipeList = recipes #assign the list read in by ReadorWrite above as the list of recipes used by RecipeQuestions
+    elif response == 'Default.':
+        print 'Sounds good.  The default list of recipes will be used.'
+        
     while True:
         
         qList = ['What is the name of the recipe?', 
@@ -183,7 +209,7 @@ def RecipeQuestions(recipeList): #this function allows the user to, by answering
         for q,d in zip(qList,dList):
             print q
             if d in qualList: #if the key corresponding to the value just input by the user is non-numeric
-                rDict[d] = input()
+                rDict[d] = input() #then just add it to the dictionary as-is
             else: #otherwise (aka the value corresponds to a numeric key aka the value, entered as a string, should actually be numeric)
                 rDict[d] = int(input()) #recast the input as numeric before adding it to the recipe dictionary, allowing math to be performed on it elsewhere in the program...
         
@@ -206,14 +232,56 @@ def RecipeQuestions(recipeList): #this function allows the user to, by answering
         print 'It looks like', newRecipeCounter, 'new recipes were added.  Want to export these?','\n', '-',affirmativeExportOption,'\n', '-',negativeExportOption
         exportResponse = input()
         if exportResponse == affirmativeExportOption:
-            print 'INSERT CODE HERE TO EXPORT RECIPES, THEN CONTINUE THE PROGRAM USING ALL RECIPES, INCLUDING THE NEW ONES'
+            print 'Sounds good, time to export the recipes.'
+            ReadorWrite('w',recipes,r'C:\Users\ckene\Desktop\test.csv')
         else:
             print 'Ok.  Newly added recipes will not be exported.'
     
     return 'All done adding recipes!'  
 
+def ReadorWrite(rw,recipes,filePath): #a function which either reads a .csv in as a list of recipes, or writes a list of recipes out as a .csv
+    #rw - read or write
+    #recipes - the name of the data structure which stores the recipes within the program
+    #filePath - the location of the file to be written to/read from
+    
+    #filePath = r'C:\Users\ckene\Desktop\test.csv'
+    #recipes = recipes
+    
+    if rw == 'w':
+        #confirm that the right filepath is being used
+        print 'Recipes will be written to', filePath,'.  Is that correct?','\n','-Yes.','/n','-No.'
+        response = input()
+        if response == 'No.': #if the user wants to specify a new filepath, give them an opportunity to do it here
+            print 'Please specify new filepath:'
+            filePath = input()
+        #export current list of recipes to a .csv
+        outfile = open(filePath,'w')
+        fieldnames = ['name', 'sweet', 'savory', 'spicy', 'effort', 'ingredients', 'prep time']
+        writer = csv.DictWriter(outfile,fieldnames = fieldnames)
+        writer.writeheader()
+        for i in recipes:
+            writer.writerow(i)
+        print 'Done writing recipes to filepath.'
 
-# In[2]:
+    elif rw == 'r':
+        #confirm that the right filepath is being used
+        print 'Recipes will be read from', filePath,'.  Is that correct?','\n','-Yes.','/n','-No.'
+        response = input()
+        if response == 'No.': #if the user wants to specify a new filepath, give them an opportunity to do it here
+            print 'Please specify new filepath:'
+            filePath = input()
+        #import a .csv and use it as the list of recipes
+        infile = open(filePath)
+        reader = csv.DictReader(infile)
+
+        readList = [] #list to store .csv dict elements in
+        for row in reader:
+            readList.append(row)
+        recipes = readList #replace list of default recipes with read-in list of recipes
+        print 'Done reading recipes from filepath.'
+
+
+# In[10]:
 
 
 #This cell runs everything
@@ -222,25 +290,25 @@ def RecipeQuestions(recipeList): #this function allows the user to, by answering
 recipes = [] #define an empty list, recipes, which will contain all of the recipes
 
 #use the function to (quickly) add another recipe to recipe
-ingredients = ['Teriyaki glaze', 'salmon', 'garlic', 'lemon juice']
+ingredients = 'Teriyaki glaze, salmon, garlic, lemon juice'
 AddRecipe('Teriyaki Salmon', 8, 3, 3, 1, ingredients, 4)
 
-ingredients = ['beef', 'brown sugar', 'garlic', 'ginger', 'sriracha', 'soy sauce','green onion']
+ingredients = 'beef, brown sugar, garlic, ginger, sriracha, soy sauce, green onion'
 AddRecipe('Korean Beef', 8, 4, 8, 2, ingredients, 3)
 
-ingredients = ['chicken', 'breadcrumbs', 'chicken bouillon', 'carrots', 'flour', 'egg', 'rice']
+ingredients = 'chicken, breadcrumbs, chicken bouillon, carrots, flour, egg, rice'
 AddRecipe('chicken and rice', 2, 10, 0, 7, ingredients, 10)
 
-ingredients = ['pasta', 'tomato sauce', 'beef', 'cumin', 'pepper', 'salt', 'onion']
+ingredients = 'pasta, tomato sauce, beef, cumin, pepper, salt, onion'
 AddRecipe('pasta with beef sauce', 1, 8, 2, 1, ingredients, 2)
 
-ingredients = ['chicken','walnuts', 'spinach', 'apples', 'strawberries', 'raspberry vinaigrette']
+ingredients = 'chicken, walnuts, spinach, apples, strawberries, raspberry vinaigrette'
 AddRecipe('raspberry vinaigrette salad', 5, 1, 0, 2, ingredients, 1)
 
-ingredients = ['sweet potato', 'onion (diced)', 'bell pepper (diced)', 'cajun seasoning', 'garlic', 'salt', 'pepper']
+ingredients = 'sweet potato, onion (diced), bell pepper (diced), cajun seasoning, garlic, salt, pepper'
 AddRecipe('sweet potato burger patty', 3, 2, 5, 8, ingredients, 9) 
 
-ingredients = ['de-veined shrimp', 'red pepper flakes', 'garlic', 'cooking wine', 'spinach', 'pasta', 'olive oil']
+ingredients = 'de-veined shrimp, red pepper flakes, garlic, cooking wine, spinach, pasta, olive oil'
 AddRecipe('red pepper shrimp scampi', 5, 0, 9, 2, ingredients, 3)
 
 #activate the functions which guide the user through the program interface
